@@ -1,49 +1,42 @@
 # Linux Forensic Triage Collector
 
-A read-only Bash toolkit for collecting volatile and high-value Linux incident-response evidence in a structured, timestamped case directory.
+A Linux incident-response toolkit for collecting structured evidence and applying selected, authorised containment actions after evidence capture.
 
-## Intended use
-
-Use this project only on systems you own or are authorised to investigate. It is designed for defensive triage, escalation evidence, and lab exercises—not covert monitoring.
-
-## Evidence collected
-
-- Host, OS, kernel, time, boot, and hardware context
-- Logged-on users, login history, failed logins, and account inventory
-- Running processes, parent-child relationships, loaded executables, and process hashes where readable
-- Listening and established network connections
-- Routes, neighbours, DNS configuration, and interface state
-- Enabled services, failed units, timers, cron metadata, and startup persistence locations
-- Loaded kernel modules
-- Recent authentication, sudo, kernel, and high-priority journal events
-- Recently modified executable files in common system paths
-- Package verification information when supported
-- SHA-256 manifest for all generated evidence files
-
-## Usage
+## Evidence collection
 
 ```bash
 chmod +x src/linux_forensic_triage.sh
-sudo ./src/linux_forensic_triage.sh
-```
-
-```bash
 sudo ./src/linux_forensic_triage.sh --hours 48 --output /secure/cases/host-01
 ```
 
+## Guarded response workflow
+
+```bash
+chmod +x src/linux_forensic_response.sh
+sudo ./src/linux_forensic_response.sh --stop-service suspicious.service --dry-run
+```
+
+Supported response actions:
+
+```bash
+sudo ./src/linux_forensic_response.sh --stop-service suspicious.service
+sudo ./src/linux_forensic_response.sh --terminate-pid 1234
+sudo ./src/linux_forensic_response.sh --quarantine-file /path/to/suspicious-file
+```
+
+## What the response workflow does
+
+- Captures process, network, service, journal and target-specific evidence first.
+- Creates SHA-256 evidence manifests.
+- Stops one selected systemd service.
+- Terminates one selected non-system user process with a normal TERM request.
+- Hashes and copies one selected regular file into a protected quarantine directory before removing the original.
+- Refuses symlink quarantine targets and low/system PIDs.
+- Supports dry-run, confirmation prompts, logs and clear exit codes.
+
 ## Safety and evidence handling
 
-The collector does not kill processes, block connections, quarantine files, alter timestamps, change permissions, or remediate findings. Run from trusted media when possible, record the command used, preserve output securely, and follow your organisation's chain-of-custody process.
-
-## Privacy
-
-The output may contain usernames, internal IP addresses, process arguments, hostnames, paths, login history, and security events. Treat it as sensitive evidence.
-
-## Requirements
-
-- Bash 4+
-- Root privileges for complete evidence
-- Optional tools such as `lsof`, `rpm`, `dpkg`, `ausearch`, and `sha256sum`
+Use only on systems you own or are authorised to investigate. Containment changes can affect evidence and production services, so follow your organisation’s incident-response and chain-of-custody procedures. The original collector remains non-destructive; response actions are separate and explicit.
 
 ## Author
 
